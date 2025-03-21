@@ -11,17 +11,44 @@ interface GlobeProps {
   };
 }
 
-const latLongToVector3 = (lat: number, lon: number, radius: number): THREE.Vector3 => {
-  const phi = (90 - lat) * (Math.PI / 180);
-  const theta = (lon + 200) * (Math.PI / 180);
+const createEarthGeometry = () => {
+  const geometry = new THREE.SphereGeometry(1, 64, 64);
+  const positions = geometry.attributes.position.array;
+  const uvs = geometry.attributes.uv.array;
 
-  const x = radius * Math.sin(phi) * Math.cos(theta);
-  const y = radius * Math.cos(phi);
-  const z = radius * Math.sin(phi) * Math.sin(theta);
+  // Adjust UV mapping to match Earth texture orientation
+  for (let i = 0; i < positions.length; i += 3) {
+    const x = positions[i];
+    const y = positions[i + 1];
+    const z = positions[i + 2];
+    
+    // Convert position to spherical coordinates
+    const phi = Math.atan2(z, x);
+    const theta = Math.acos(y);
+    
+    // Map to UV coordinates
+    // Note: We invert the V coordinate (1 - v) to flip the texture right-side up
+    uvs[i/3 * 2] = (phi + Math.PI) / (2 * Math.PI);
+    uvs[i/3 * 2 + 1] = 1 - (theta / Math.PI);
+  }
+
+  geometry.attributes.uv.needsUpdate = true;
+  return geometry;
+};
+
+const latLongToVector3 = (lat: number, lon: number, radius: number): THREE.Vector3 => {
+  // Convert lat/lon to radians
+  const latRad = lat * (Math.PI / 180);
+  const lonRad = lon * (Math.PI / 180);
+
+  // Convert to 3D coordinates
+  const x = radius * Math.cos(latRad) * Math.cos(lonRad);
+  const y = radius * Math.sin(latRad);
+  const z = radius * Math.cos(latRad) * Math.sin(lonRad);
 
   console.log('Coordinate Mapping:');
   console.log('Input:', { lat, lon });
-  console.log('Radians:', { phi, theta });
+  console.log('Radians:', { latRad, lonRad });
   console.log('Position:', { x, y, z });
 
   return new THREE.Vector3(x, y, z);
@@ -38,6 +65,7 @@ export const Globe: React.FC<GlobeProps> = ({ selectedLocation }) => {
       const point = latLongToVector3(selectedLocation.lat, selectedLocation.lon, 1.01);
       markerRef.current.position.copy(point);
 
+      // Fix marker orientation to point outward from the globe
       markerRef.current.lookAt(new THREE.Vector3(0, 0, 0));
       markerRef.current.rotateX(Math.PI / 2);
 
@@ -76,7 +104,7 @@ export const Globe: React.FC<GlobeProps> = ({ selectedLocation }) => {
       <directionalLight position={[5, 3, 5]} intensity={1.5} />
       <pointLight position={[-5, -3, -5]} intensity={0.8} />
 
-      <Sphere ref={globeRef} args={[1, 64, 64]}>
+      <mesh ref={globeRef} geometry={createEarthGeometry()}>
         <meshPhongMaterial
           map={new THREE.TextureLoader().load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_atmos_2048.jpg')}
           bumpMap={new THREE.TextureLoader().load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_normal_2048.jpg')}
@@ -85,7 +113,7 @@ export const Globe: React.FC<GlobeProps> = ({ selectedLocation }) => {
           specular={new THREE.Color(0x999999)}
           shininess={15}
         />
-      </Sphere>
+      </mesh>
 
       <Sphere ref={glowRef} args={[1.1, 32, 32]}>
         <meshPhongMaterial color={0x0066ff} transparent opacity={0.15} side={THREE.BackSide} />

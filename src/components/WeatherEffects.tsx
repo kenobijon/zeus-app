@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
@@ -53,13 +53,13 @@ const CloudModel: React.FC<CloudModelProps> = ({ position, scale = 1, rotation =
     });
   });
 
-  const handlePointerOver = useCallback((e: THREE.Event) => {
+  const handlePointerOver = useCallback((e: any) => {
     e.stopPropagation();
     setHovered(true);
     if (onHover) onHover();
   }, [onHover]);
 
-  const handlePointerOut = useCallback((e: THREE.Event) => {
+  const handlePointerOut = useCallback((e: any) => {
     e.stopPropagation();
     setHovered(false);
     if (onUnhover) onUnhover();
@@ -217,8 +217,24 @@ const WeatherSystem: React.FC = () => {
     setLightnings(prev => [...prev, { id, position }]);
     setTimeout(() => {
       setLightnings(prev => prev.filter(l => l.id !== id));
-    }, 500); // Increased duration
+    }, 500);
   }, []);
+
+  // Add random lightning effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (Math.random() < 0.6) { // 60% chance of lightning (increased from 30%)
+        const randomCloud = clouds[Math.floor(Math.random() * clouds.length)];
+        createLightning([
+          randomCloud.position[0],
+          randomCloud.position[1] - 0.5,
+          randomCloud.position[2]
+        ]);
+      }
+    }, 800); // Check every 800ms (reduced from 2000ms)
+
+    return () => clearInterval(interval);
+  }, [createLightning]);
 
   const clouds = React.useMemo(() => {
     const cloudData = [];
@@ -248,13 +264,6 @@ const WeatherSystem: React.FC = () => {
           position={cloud.position}
           scale={cloud.scale}
           rotation={cloud.rotation}
-          onHover={() => {
-            createLightning([
-              cloud.position[0],
-              cloud.position[1] - 0.5,
-              cloud.position[2]
-            ]);
-          }}
         />
       ))}
       {lightnings.map(lightning => (
