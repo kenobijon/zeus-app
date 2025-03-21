@@ -15,6 +15,13 @@ body {
   background: #0f172a;
 }
 
+@layer components {
+  .nav-button {
+    @apply flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-white
+           transition-colors duration-200 rounded-lg hover:bg-slate-800/50;
+  }
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

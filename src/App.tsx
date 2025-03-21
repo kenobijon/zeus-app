@@ -1,10 +1,12 @@
 import React, { useState, Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
-import { Zap, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { SearchBar } from './components/SearchBar';
 import { Globe } from './components/Globe';
 import { WeatherInfo } from './components/WeatherInfo';
+import { Navbar } from './components/Navbar';
+import { WeatherEffects } from './components/WeatherEffects';
 
 interface LocationData {
   name: string;
@@ -31,16 +33,15 @@ function App() {
 
   return (
     <div className="relative w-full h-screen bg-slate-900 overflow-hidden">
-      {/* Background gradient */}
+      {/* Background Elements */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-slate-900/20" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(14,165,233,0.15),transparent_100%)]" />
+      <WeatherEffects />
       
-      {/* Header */}
-      <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-10">
-        <div className="flex items-center gap-4 mb-6">
-          <h1 className="text-4xl font-bold text-white flex items-center gap-2">
-            Zeus <Zap className="text-blue-400" size={32} />
-          </h1>
-        </div>
+      <Navbar />
+      
+      {/* Search Bar */}
+      <div className="absolute top-28 left-1/2 transform -translate-x-1/2 z-10">
         <SearchBar onLocationSelect={handleLocationSelect} />
       </div>
 
